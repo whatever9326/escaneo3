@@ -6,222 +6,65 @@
   <title>Escaneo de Pedidos - Demo</title>
   <style>
     * { box-sizing: border-box; }
-    body { font-family: sans-serif; padding: 1rem; margin: 0; background: #fafafa; }
-    h1 { font-size: 1.5rem; text-align: center; }
+    body {
+      font-family: sans-serif;
+      padding: 1rem;
+      margin: 0;
+      background: #fafafa url('logo-2019082111381865800.jpeg') no-repeat center center fixed;
+      background-size: contain;
+    }
+    h1 { font-size: 1.5rem; text-align: center; background: white; padding: 0.5rem; }
     input[type="file"], input[type="text"], input[type="url"], select, button {
       width: 100%; max-width: 600px; margin: 0.5rem auto; display: block;
       font-size: 1.1rem; padding: 0.5rem;
     }
-    button { cursor: pointer; background: #1976d2; color: white; border: none; border-radius: 5px; }
+    button {
+      cursor: pointer;
+      background: #1976d2;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
     button:hover { background: #125aa0; }
-    table { border-collapse: collapse; width: 100%; margin-top: 1rem; font-size: 0.95rem; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 1rem;
+      font-size: 0.95rem;
+      background: white;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+    }
     th { background: #f2f2f2; }
     .completo { background: #c8e6c9; }
     .exceso { background: #ffcdd2; }
-    .error { color: red; margin-top: 1rem; font-size: 0.9rem; }
-    #historial { padding-top: 1rem; font-size: 0.9rem; }
+    .error {
+      color: red;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      background: white;
+      padding: 0.5rem;
+    }
+    #historial {
+      padding-top: 1rem;
+      font-size: 0.9rem;
+      background: white;
+      padding: 0.5rem;
+    }
     #mensaje-temporal {
       color: red;
       text-align: center;
       margin-top: 1rem;
       font-weight: bold;
       display: none;
+      background: white;
+      padding: 0.5rem;
     }
     @media (min-width: 700px) {
       input, select, button { max-width: 600px; }
     }
   </style>
 </head>
-<body>
-  <h1>Escaneo de Productos</h1>
-  <input type="url" id="sheetUrl" placeholder="URL pública de Google Sheets">
-  <button onclick="cargarDesdeSheet()">Cargar</button>
-  <select id="pedidoSelect"></select>
-  <input type="text" id="barcodeInput" placeholder="Escanea código de barras">
-  <button onclick="exportarResumen()">Exportar resumen</button>
-  <button onclick="guardarHistorial()">Guardar historial</button>
-  <button onclick="verHistorial()">Ver historial</button>
-  <div id="errores"></div>
-  <div id="mensaje-temporal"></div>
-  <table id="pedidoTable"></table>
-  <div id="historial"></div>
-  <audio id="sonido-ok" preload="auto"><source src="ok.mp3" type="audio/mpeg"></audio>
-  <audio id="sonido-error" preload="auto"><source src="error.mp3" type="audio/mpeg"></audio>
-  <script>
-    let pedidos = {};
-    let pedidoActual = null;
-    let errores = [];
-
-    const sonidoOk = document.getElementById('sonido-ok');
-    const sonidoError = document.getElementById('sonido-error');
-    const mensajeTemporal = document.getElementById('mensaje-temporal');
-
-    function mostrarMensaje(texto) {
-      mensajeTemporal.textContent = texto;
-      mensajeTemporal.style.display = 'block';
-      setTimeout(() => mensajeTemporal.style.display = 'none', 2500);
-    }
-
-    function cargarDesdeSheet() {
-      const url = document.getElementById('sheetUrl').value;
-      const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
-      if (!match) {
-        mostrarMensaje('❌ URL inválida de Google Sheets.');
-        return;
-      }
-
-      const sheetId = match[1];
-      const sheetURL = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
-
-      fetch(sheetURL)
-        .then(res => res.text())
-        .then(data => procesarCSV(data))
-        .catch(err => {
-          console.error(err);
-          mostrarMensaje('❌ No se pudo cargar la hoja. Asegúrate de que sea pública.');
-        });
-    }
-
-    function limpiarComillas(texto) {
-      return texto.replace(/^"|"$/g, '');
-    }
-
-    function procesarCSV(csvText) {
-      const lines = csvText.trim().split('\n');
-      pedidos = {};
-      errores = [];
-
-      for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(',');
-        if (cols.length < 4) continue;
-
-        const [idRaw, codeRaw, nameRaw, qtyRaw] = cols;
-        const id = limpiarComillas(idRaw.trim());
-        const code = limpiarComillas(codeRaw.trim());
-        const name = limpiarComillas(nameRaw.trim());
-        const qtyText = limpiarComillas(qtyRaw.trim());
-
-        const qty = parseInt(qtyText);
-        if (!id || !code || !name || isNaN(qty)) continue;
-
-        if (!pedidos[id]) pedidos[id] = {};
-        pedidos[id][code] = { nombre: name, cantidad: qty, escaneado: 0 };
-      }
-
-      actualizarSelectorPedidos();
-    }
-
-    function actualizarSelectorPedidos() {
-      const selector = document.getElementById('pedidoSelect');
-      selector.innerHTML = '<option value="">-- Selecciona un pedido --</option>';
-      for (const id in pedidos) {
-        const option = document.createElement('option');
-        option.value = id;
-        option.textContent = `Pedido ${id}`;
-        selector.appendChild(option);
-      }
-      selector.addEventListener('change', function () {
-        pedidoActual = pedidos[this.value] || null;
-        renderTabla();
-        document.getElementById('barcodeInput').focus();
-      });
-    }
-
-    document.getElementById('barcodeInput').addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') {
-        if (!pedidoActual) {
-          mostrarMensaje('❗ Debes seleccionar un pedido primero');
-          return;
-        }
-
-        const code = e.target.value.trim();
-        if (!code) return;
-
-        if (pedidoActual[code]) {
-          if (pedidoActual[code].escaneado < pedidoActual[code].cantidad) {
-            pedidoActual[code].escaneado++;
-            sonidoOk.play();
-          } else {
-            mostrarMensaje('❌ Ya escaneaste todos los de este producto');
-            sonidoError.play();
-          }
-        } else {
-          mostrarMensaje('❌ Producto no está en el pedido seleccionado');
-          sonidoError.play();
-        }
-
-        e.target.value = '';
-        renderTabla();
-        setTimeout(() => document.getElementById('barcodeInput').focus(), 100);
-      }
-    });
-
-    function renderTabla() {
-      const table = document.getElementById('pedidoTable');
-      table.innerHTML = '<tr><th>Código</th><th>Nombre</th><th>Cantidad</th><th>Escaneado</th></tr>';
-      if (!pedidoActual) return;
-
-      for (const code in pedidoActual) {
-        const p = pedidoActual[code];
-        const row = document.createElement('tr');
-        if (p.escaneado === p.cantidad) row.classList.add('completo');
-        if (p.escaneado > p.cantidad) row.classList.add('exceso');
-        row.innerHTML = `
-          <td>${code}</td>
-          <td>${p.nombre}</td>
-          <td>${p.cantidad}</td>
-          <td>${p.escaneado}</td>
-        `;
-        table.appendChild(row);
-      }
-    }
-
-    function exportarResumen() {
-      if (!pedidoActual) {
-        mostrarMensaje('Selecciona un pedido para exportar el resumen.');
-        return;
-      }
-
-      let csv = 'codigo_barras,nombre_producto,cantidad,escaneado\n';
-      for (const code in pedidoActual) {
-        const p = pedidoActual[code];
-        csv += `${code},${p.nombre},${p.cantidad},${p.escaneado}\n`;
-      }
-
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      link.setAttribute('href', URL.createObjectURL(blob));
-      link.setAttribute('download', 'resumen_escaneo.csv');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-
-    function guardarHistorial() {
-      if (!pedidoActual) {
-        mostrarMensaje('Selecciona un pedido para guardar su historial.');
-        return;
-      }
-      const id = document.getElementById('pedidoSelect').value;
-      localStorage.setItem('historial_' + id, JSON.stringify(pedidoActual));
-      mostrarMensaje('✅ Historial guardado para el pedido ' + id);
-    }
-
-    function verHistorial() {
-      const contenedor = document.getElementById('historial');
-      contenedor.innerHTML = '<h3>Historial guardado</h3>';
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key.startsWith('historial_')) {
-          const id = key.replace('historial_', '');
-          const data = JSON.parse(localStorage.getItem(key));
-          contenedor.innerHTML += `<strong>Pedido ${id}</strong><ul>` +
-            Object.entries(data).map(([code, p]) =>
-              `<li>${code}: ${p.nombre} → ${p.escaneado}/${p.cantidad}</li>`).join('') + '</ul>';
-        }
-      }
-    }
-  </script>
-</body>
-</html>
