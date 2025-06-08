@@ -8,15 +8,37 @@
     * { box-sizing: border-box; }
     body {
       font-family: sans-serif;
-      padding: 1rem;
       margin: 0;
-      background: #fafafa url('logo-2019082111381865800.jpeg') no-repeat center center fixed;
-      background-size: contain;
+      padding: 0;
+      background: #fafafa;
     }
-    h1 { font-size: 1.5rem; text-align: center; background: white; padding: 0.5rem; }
+    .contenedor {
+      padding: 1rem;
+      background: white;
+      max-width: 800px;
+      margin: auto;
+    }
+    .logo-fondo {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: url('logo-2019082111381865800.jpeg') no-repeat center center;
+      background-size: contain;
+      opacity: 0.07;
+      z-index: -1;
+    }
+    h1 {
+      font-size: 1.5rem;
+      text-align: center;
+    }
     input[type="file"], input[type="text"], input[type="url"], select, button {
-      width: 100%; max-width: 600px; margin: 0.5rem auto; display: block;
-      font-size: 1.1rem; padding: 0.5rem;
+      width: 100%; max-width: 600px;
+      margin: 0.5rem auto;
+      display: block;
+      font-size: 1.1rem;
+      padding: 0.5rem;
     }
     button {
       cursor: pointer;
@@ -31,7 +53,6 @@
       width: 100%;
       margin-top: 1rem;
       font-size: 0.95rem;
-      background: white;
     }
     th, td {
       border: 1px solid #ddd;
@@ -45,14 +66,10 @@
       color: red;
       margin-top: 1rem;
       font-size: 0.9rem;
-      background: white;
-      padding: 0.5rem;
     }
     #historial {
       padding-top: 1rem;
       font-size: 0.9rem;
-      background: white;
-      padding: 0.5rem;
     }
     #mensaje-temporal {
       color: red;
@@ -60,11 +77,14 @@
       margin-top: 1rem;
       font-weight: bold;
       display: none;
-      background: white;
-      padding: 0.5rem;
-    }
-    @media (min-width: 700px) {
-      input, select, button { max-width: 600px; }
     }
   </style>
 </head>
+<body>
+  <div class="logo-fondo"></div>
+  <div class="contenedor">
+    <h1>Escaneo de Productos</h1>
+    <!-- Aquí irán los elementos funcionales -->
+  </div>
+</body>
+</html>
