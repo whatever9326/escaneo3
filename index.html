@@ -194,37 +194,6 @@ function exportarResumen() {
   const filas = pedidoActual.map(p => [p.codigo, p.descripcion, p.cantidad, p.escaneados]);
   const csv = ["CODIGO,DESCRIPCION,CANTIDAD,ESCANEADOS", ...filas.map(f => f.join(","))].join("
 ");
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.setAttribute("href", url);
-  link.setAttribute("download", "resumen.csv");
-  link.click();
-}
-
-function guardarHistorial() {
-  if (!pedidoActual) return;
-  historial.push({ fecha: new Date().toLocaleString(), pedido: JSON.parse(JSON.stringify(pedidoActual)) });
-  localStorage.setItem("historial", JSON.stringify(historial));
-  mostrarMensaje("Historial guardado", true);
-}
-
-function verHistorial() {
-  const div = document.getElementById("historial");
-  historial = JSON.parse(localStorage.getItem("historial")) || [];
-  div.innerHTML = historial.map(entry => {
-    const lista = entry.pedido.map(p => `${p.codigo}: ${p.escaneados}/${p.cantidad}`).join("<br>");
-    return `<div><strong>${entry.fecha}</strong><br>${lista}</div><hr>`;
-  }).join("");
-}
-
-function mostrarMensaje(msg, ok = false) {
-  const div = document.getElementById("mensaje-temporal");
-  div.textContent = msg;
-  div.style.color = ok ? "green" : "red";
-  div.style.display = "block";
-  setTimeout(() => div.style.display = "none", 3000);
-}
 </script>
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
